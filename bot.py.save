@@ -48,7 +48,7 @@ user_settings = {}
 
 def get_settings(user_id):
     if user_id not in user_settings:
-        user_settings[user_id] = {
+        ser_settings[user_id] = {
             "lang": "ru",
             "gender": "male",
             "voice": "Dmitry",
@@ -67,32 +67,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # /tts
-async def tts(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = " ".join(context.args)
-    if not text:
-        await update.message.reply_text("Usage: /tts Привет друзья")
-        return
 
-    s = get_settings(update.effective_user.id)
-    voice_name = VOICES[s["lang"]][s["gender"]][s["voice"]]
-    rate = SPEED_OPTIONS[s["speed"]]
-    filename = f"voice_{update.effective_user.id}.mp3"
-
-    try:
-        communicate = edge_tts.Communicate(text, voice_name, rate=rate)
-        await communicate.save(filename)
-
-        with open(filename, "rb") as audio:
-            await update.message.reply_voice(audio, caption=f"🎙 {s['voice']} | {LANG_NAMES[s['lang']]} | {s['speed']}")
-
-        with open(filename, "rb") as audio:
-            await update.message.reply_document(audio, filename="tts.mp3", caption="⬇️ Download MP3")
-
-    except Exception as e:
-        await update.message.reply_text(f"Error: {e}")
-    finally:
-        if os.path.exists(filename):
-            os.remove(filename)
 # /settings — show language picker
 async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[InlineKeyboardButton(name, callback_data=f"lang_{code}")]

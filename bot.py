@@ -1,11 +1,10 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, ConversationHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 import edge_tts
 import os
 
 TOKEN = os.environ.get("BOT_TOKEN")
 
-# Available voices
 VOICES = {
     "ru": {
         "male": {"Dmitry": "ru-RU-DmitryNeural"},
@@ -43,7 +42,6 @@ SPEED_OPTIONS = {
     "very fast": "+50%"
 }
 
-# Default user settings
 user_settings = {}
 
 def get_settings(user_id):
@@ -56,7 +54,6 @@ def get_settings(user_id):
         }
     return user_settings[user_id]
 
-# /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🎙 *TTS Bot*\n\n"
@@ -66,7 +63,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-# /tts
 async def tts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = " ".join(context.args)
     if not text:
@@ -93,7 +89,16 @@ async def tts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     finally:
         if os.path.exists(filename):
             os.remove(filename)
-# /settings — show language picker
+
+async def list_voices(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = "🎙 *Available Voices*\n\n"
+    for lang, code in LANG_NAMES.items():
+        msg += f"{code}\n"
+        for gender, v in VOICES[lang].items():
+            names = ", ".join(v.keys())
+            msg += f"  {'👨' if gender == 'male' else '👩'} {names}\n"
+    await update.message.reply_text(msg, parse_mode="Markdown")
+
 async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[InlineKeyboardButton(name, callback_data=f"lang_{code}")]
                 for code, name in LANG_NAMES.items()]
@@ -102,7 +107,6 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-# Callbacks
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -113,7 +117,6 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data.startswith("lang_"):
         lang = data.split("_")[1]
         s["lang"] = lang
-        # Pick first available male voice as default
         s["gender"] = "male"
         s["voice"] = list(VOICES[lang]["male"].keys())[0]
         keyboard = [
@@ -153,7 +156,7 @@ app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("tts", tts))
 app.add_handler(CommandHandler("settings", settings))
-app.add_handler(CommandHandler("voices", voices))
+app.add_handler(CommandHandler("voices", list_voices))
 app.add_handler(CallbackQueryHandler(callback_handler))
 
 print("Bot is running...")

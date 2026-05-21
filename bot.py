@@ -3,7 +3,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandle
 import edge_tts
 import os
 
-TOKEN = os.environ.get("8820429331:AAGALjWhVq-mJBsg7VpPgIxsQ9jy0scBldg")
+TOKEN = os.environ.get("BOT_TOKEN")
 
 # Available voices
 VOICES = {
